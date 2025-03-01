@@ -233,6 +233,12 @@ const RetroTokenizer = () => {
 		// Toggle scanline effect periodically for that retro CRT feel
 		const scanlineInterval = setInterval(() => {
 			setScanlineActive((prev) => !prev);
+			setScanlineActive(true);
+
+			// set back to false after 800ms
+			setTimeout(() => {
+				setScanlineActive(false);
+			}, 900);
 		}, 5000);
 
 		// Blinking element effect for warning indicators
@@ -356,18 +362,18 @@ const RetroTokenizer = () => {
 			onKeyDown={handleKeyDown}
 		>
 			{/* Grid pattern background */}
-			<div
+			{/* <div
 				className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none"
 				style={{
 					backgroundImage:
 						"linear-gradient(rgba(0, 180, 180, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 180, 180, 0.5) 1px, transparent 1px)",
 					backgroundSize: "20px 20px",
 				}}
-			/>
+			/> */}
 
 			{/* Scanline effect */}
 			{scanlineActive && (
-				<div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+				<div className="absolute top-0 left-0 w-full h-full pointer-events-none z-100">
 					<div
 						className="h-full w-full opacity-50"
 						style={{
