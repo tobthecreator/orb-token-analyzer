@@ -1,4 +1,145 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+
+const SettingsModal = ({ onClose }: { onClose: () => void }) => {
+	return (
+		<div className="fixed inset-0 flex items-center justify-center z-20">
+			{/* Modal backdrop */}
+			<div
+				className="absolute inset-0 bg-black bg-opacity-80"
+				onClick={() => onClose}
+			></div>
+
+			{/* Modal content */}
+			<div className="relative w-2/3 max-w-2xl border border-orange-600 bg-black z-30 p-4">
+				<div className="text-sm text-orange-600 font-bold mb-4 border-b border-orange-600 pb-2 flex justify-between">
+					<span>SYSTEM CONFIGURATION</span>
+				</div>
+
+				<div className="grid gap-4">
+					<div className="grid grid-cols-2 gap-4">
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								API ENDPOINT:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="https://api.example.com/v1"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								API KEY:
+							</label>
+							<input
+								type="password"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="sk-xxxxx"
+							/>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-2 gap-4">
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								MODEL:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="gpt-4-turbo"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								TEMPERATURE:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="0.7"
+							/>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-2 gap-4">
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								TOP-K TOKENS:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="5"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								TOP-P:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="0.9"
+							/>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-2 gap-4">
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								FREQUENCY PENALTY:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="0.0"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-xs text-orange-600 mb-1">
+								PRESENCE PENALTY:
+							</label>
+							<input
+								type="text"
+								className="w-full bg-black text-teal-400 border border-teal-900 p-2 focus:outline-none focus:border-orange-600"
+								placeholder="0.0"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div className="mt-6 flex justify-between">
+					<p className="text-[0.9rem] text-teal-400">
+						All settings are stored locally in browser.
+					</p>
+					<div className="flex gap-4">
+						<button
+							onClick={() => onClose()}
+							className="cursor-pointer border border-teal-900 px-4 py-2 text-teal-400 hover:bg-teal-900 hover:bg-opacity-20"
+						>
+							CANCEL
+						</button>
+						<button
+							onClick={() => onClose()}
+							className="cursor-pointer border border-orange-600 px-4 py-2 text-orange-600 hover:bg-orange-900 hover:bg-opacity-20"
+						>
+							SAVE
+						</button>
+					</div>
+				</div>
+
+				{/* Eva-inspired decorative elements */}
+				<div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-orange-600 pointer-events-none opacity-60"></div>
+				<div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-teal-400 pointer-events-none opacity-60"></div>
+			</div>
+		</div>
+	);
+};
 
 const RetroTokenizer = () => {
 	const [prompt, setPrompt] = useState(
@@ -10,6 +151,7 @@ const RetroTokenizer = () => {
 	const [scanlineActive, setScanlineActive] = useState(true);
 	const [blinkingElement, setBlinkingElement] = useState(true);
 	const [focusedIndex, setFocusedIndex] = useState(-1); // -1 for prompt, 0+ for tokens
+	const [showSettings, setShowSettings] = useState(false);
 
 	// Refs for DOM elements
 	const promptRef = useRef(null);
@@ -251,9 +393,29 @@ const RetroTokenizer = () => {
 					<div className="text-xl font-bold text-orange-600">ORB</div>
 				</div>
 				<div className="text-teal-400">SYSTEM STATUS: NORMAL</div>
-				<div className="text-teal-400">T-MINUS {`24:15:${timeLeft}`}</div>
+				<div className="flex align-center gap-x-4">
+					<div className="text-teal-400">
+						T-MINUS {`24:15:${timeLeft < 10 ? "0" : ""}${timeLeft}`}
+					</div>
+					<button
+						className="text-orange-600 border cursor-pointer border-teal-900 px-2 py-1 text-xs flex items-center hover:bg-teal-900 hover:bg-opacity-20 focus:outline-none focus:border-orange-600"
+						onClick={() => setShowSettings(!showSettings)}
+						aria-label="Settings"
+					>
+						<span className="mr-1">SETTINGS</span>
+						<span
+							className={`${blinkingElement ? "opacity-100" : "opacity-40"}`}
+						>
+							⚙
+						</span>
+					</button>
+				</div>
 			</div>
 
+			{/* Settings modal */}
+			{showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+			{/* Main content */}
 			<div className="flex h-full gap-4">
 				{/* Left panel - Input and tokens */}
 				<div className="flex flex-col w-1/2 gap-4">
