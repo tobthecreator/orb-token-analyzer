@@ -142,9 +142,7 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 const RetroTokenizer = () => {
-	const [prompt, setPrompt] = useState(
-		"The ship's computer analyzed the alien signal as <unintelligible>. Ash suggested we investigate."
-	);
+	const [prompt, setPrompt] = useState("");
 	const [tokens, setTokens] = useState([]);
 	const [selectedToken, setSelectedToken] = useState(null);
 	const [tokenData, setTokenData] = useState(null);
@@ -362,14 +360,14 @@ const RetroTokenizer = () => {
 			onKeyDown={handleKeyDown}
 		>
 			{/* Grid pattern background */}
-			{/* <div
+			<div
 				className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none"
 				style={{
 					backgroundImage:
 						"linear-gradient(rgba(0, 180, 180, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 180, 180, 0.5) 1px, transparent 1px)",
 					backgroundSize: "20px 20px",
 				}}
-			/> */}
+			/>
 
 			{/* Scanline effect */}
 			{scanlineActive && (
@@ -434,6 +432,7 @@ const RetroTokenizer = () => {
 							</span>
 						</div>
 						<textarea
+							placeholder="Enter your prompt..."
 							ref={promptRef}
 							className={`w-full h-32 bg-black text-teal-400 font-mono p-2 border resize-none focus:outline-none ${
 								focusedIndex === -1
@@ -445,38 +444,58 @@ const RetroTokenizer = () => {
 							onFocus={() => setFocusedIndex(-1)}
 							tabIndex={1}
 						/>
-						<div className="absolute top-8 right-0 w-1/2 h-px bg-orange-600 opacity-50" />
 					</div>
 
 					{/* Token breakdown */}
 					<div className="border border-teal-900 p-2 flex-grow overflow-auto relative">
-						<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
-							TOKEN ANALYSIS
-						</div>
-						<div className="grid grid-cols-1 gap-2" ref={tokenListRef}>
-							{tokens.map((token, i) => (
-								<div
-									key={i}
-									ref={(el) => (tokenRefs.current[i] = el)}
-									className={`flex items-center border p-2 cursor-pointer hover:bg-teal-900 hover:bg-opacity-20 ${
-										selectedToken?.id === i || focusedIndex === i
-											? "border-orange-600 bg-teal-900 bg-opacity-10"
-											: "border-teal-900"
-									}`}
-									onClick={() => handleTokenClick(i)}
-									onFocus={() => setFocusedIndex(i)}
-									tabIndex={i + 2}
-								>
-									<div className="text-xs text-orange-600 mr-2">
-										{i.toString().padStart(2, "0")}
+						{!prompt ? (
+							<div className="flex items-center justify-center h-full text-center">
+								<div>
+									<div
+										className={`text-orange-600 mt-4 ${
+											blinkingElement ? "opacity-100" : "opacity-40"
+										}`}
+									>
+										<div className="text-xl text-orange-600 mb-4">
+											[NO PROMPT]
+										</div>
 									</div>
-									<div className="text-teal-400 flex-grow">{token.text}</div>
-									<div className="text-xs text-teal-600">
-										p={token.probability.toFixed(2)}
-									</div>
+									<div className="text-teal-400 text-sm">AWAITING INPUT</div>
 								</div>
-							))}
-						</div>
+							</div>
+						) : (
+							<>
+								<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
+									TOKEN ANALYSIS
+								</div>
+								<div className="grid grid-cols-1 gap-2" ref={tokenListRef}>
+									{tokens.map((token, i) => (
+										<div
+											key={i}
+											ref={(el) => (tokenRefs.current[i] = el)}
+											className={`flex items-center border p-2 cursor-pointer hover:bg-teal-900 hover:bg-opacity-20 ${
+												selectedToken?.id === i || focusedIndex === i
+													? "border-orange-600 bg-teal-900 bg-opacity-10"
+													: "border-teal-900"
+											}`}
+											onClick={() => handleTokenClick(i)}
+											onFocus={() => setFocusedIndex(i)}
+											tabIndex={i + 2}
+										>
+											<div className="text-xs text-orange-600 mr-2">
+												{i.toString().padStart(2, "0")}
+											</div>
+											<div className="text-teal-400 flex-grow">
+												{token.text}
+											</div>
+											<div className="text-xs text-teal-600">
+												p={token.probability.toFixed(2)}
+											</div>
+										</div>
+									))}
+								</div>
+							</>
+						)}
 					</div>
 				</div>
 
@@ -485,17 +504,14 @@ const RetroTokenizer = () => {
 					{!tokenData ? (
 						<div className="flex items-center justify-center h-full text-center">
 							<div>
-								<div className="text-xl text-orange-600 mb-4">
-									[SELECT TOKEN]
-								</div>
-								<div className="text-teal-400 text-sm">AWAITING INPUT</div>
 								<div
-									className={`text-orange-600 mt-4 ${
+									className={`text-orange-600 my-4 ${
 										blinkingElement ? "opacity-100" : "opacity-40"
 									}`}
 								>
-									ANALYZING...
+									[SELECT TOKEN]
 								</div>
+								<div className="text-teal-400 text-sm">AWAITING INPUT</div>
 							</div>
 						</div>
 					) : (
@@ -629,7 +645,7 @@ const RetroTokenizer = () => {
 										return (
 											<div
 												key={i}
-												className="absolute bottom-0 h-16 border-r border-teal-900 flex items-end justify-center"
+												className="absolute bottom-0 h-16 border-r border-teal-900 flex items-end overflow-hidden p-2"
 												style={{
 													left: left,
 													width: width,
@@ -638,32 +654,17 @@ const RetroTokenizer = () => {
 													})`,
 												}}
 											>
-												<div className="text-xs rotate-90 origin-bottom-left absolute bottom-0 left-1 text-black">
-													{prediction.token.length > 6
-														? prediction.token.substring(0, 6) + "..."
-														: prediction.token}
-												</div>
-												{/* <div className="w-full h-2 bg-orange-600 absolute bottom-0"></div> */}
+												{prediction.probability > 0 && (
+													<div className="text-xs text-black">
+														{prediction.token}
+													</div>
+												)}
 											</div>
 										);
 									})}
 
-									{/* Grid lines */}
-									<div
-										className="w-full h-full absolute top-0 left-0 grid grid-cols-4"
-										style={{ pointerEvents: "none" }}
-									>
-										{[...Array(5)].map((_, i) => (
-											<div
-												key={i}
-												className="h-full border-l border-teal-900 opacity-30"
-												style={{ left: `${i * 25}%` }}
-											></div>
-										))}
-									</div>
-
 									{/* X-axis labels */}
-									<div className="absolute bottom-0 left-0 w-full flex justify-between px-1 text-xs text-teal-600">
+									<div className="absolute top-2 left-0 w-full flex justify-between px-1 text-xs text-teal-600">
 										<span>0.0</span>
 										<span>0.25</span>
 										<span>0.5</span>
