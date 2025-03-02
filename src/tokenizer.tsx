@@ -1,5 +1,40 @@
 import { useState, useEffect, useRef } from "react";
 
+const SectionHeader = ({ title }: { title: string }) => {
+	return (
+		<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1 uppercase">
+			{title}
+		</div>
+	);
+};
+
+const EmptyState = ({
+	message,
+	action = "Awaiting Input",
+	blinking,
+}: {
+	message: string;
+	action: string;
+	blinking: boolean;
+}) => {
+	return (
+		<div className="flex items-center justify-center h-full text-center">
+			<div>
+				<div
+					className={`text-orange-600 mt-4 ${
+						blinking ? "opacity-100" : "opacity-40"
+					}`}
+				>
+					<div className="text-xl text-orange-600 mb-4 uppercase">
+						[{message}]
+					</div>
+				</div>
+				<div className="text-teal-400 text-sm uppercase">{action}</div>
+			</div>
+		</div>
+	);
+};
+
 const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 	return (
 		<div className="fixed inset-0 flex items-center justify-center z-20">
@@ -13,6 +48,9 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
 			<div className="relative w-2/3 max-w-2xl border border-orange-600 bg-black z-30 p-4">
 				<div className="text-sm text-orange-600 font-bold mb-4 border-b border-orange-600 pb-2 flex justify-between">
 					<span>SYSTEM CONFIGURATION</span>
+					<span className="cursor-pointer" onClick={onClose}>
+						ESC
+					</span>
 				</div>
 
 				<div className="grid gap-4">
@@ -289,6 +327,8 @@ const RetroTokenizer = () => {
 					promptRef.current.focus();
 				}
 			}
+		} else if (e.key === "Escape" && showSettings) {
+			setShowSettings(false);
 		} else if (focusedIndex >= 0) {
 			// Handle arrow keys in token list
 			switch (e.key) {
@@ -421,10 +461,9 @@ const RetroTokenizer = () => {
 
 			{/* Main content */}
 			<div className="flex h-full gap-4">
-				{/* Left panel - Input and tokens */}
-				<div className="flex flex-col w-1/2 gap-4">
-					{/* Prompt input */}
-					<div className="border border-teal-900 p-2 relative">
+				<div className="grid grid-cols-2 gap-4 w-full grid-rows-[auto_1fr]">
+					{/* Propmt */}
+					<div className="border border-teal-900 p-2 relative h-48">
 						<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1 flex justify-between">
 							PROMPT ENTRY
 							<span className={blinkingElement ? "opacity-100" : "opacity-0"}>
@@ -446,28 +485,56 @@ const RetroTokenizer = () => {
 						/>
 					</div>
 
-					{/* Token breakdown */}
-					<div className="border border-teal-900 p-2 flex-grow overflow-auto relative">
+					{/* Prompt Metrics */}
+					<div className="border border-teal-900 p-4 flex flex-col relative h-48">
 						{!prompt ? (
-							<div className="flex items-center justify-center h-full text-center">
-								<div>
-									<div
-										className={`text-orange-600 mt-4 ${
-											blinkingElement ? "opacity-100" : "opacity-40"
-										}`}
-									>
-										<div className="text-xl text-orange-600 mb-4">
-											[NO PROMPT]
-										</div>
-									</div>
-									<div className="text-teal-400 text-sm">AWAITING INPUT</div>
-								</div>
-							</div>
+							<EmptyState
+								message="NO PROMPT"
+								action="AWAITING INPUT"
+								blinking={blinkingElement}
+							/>
 						) : (
 							<>
-								<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
-									TOKEN ANALYSIS
+								<SectionHeader title="Prompt Metrics" />
+								<div className="grid grid-cols-2 gap-4 mb-4">
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">TOKENS:</div>
+										<div className="text-teal-400 text-xl">{tokens.length}</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									</div>
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">CHARACTERS:</div>
+										<div className="text-teal-400 text-xl">{prompt.length}</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									</div>
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">WORDS:</div>
+										<div className="text-teal-400 text-xl">{prompt.length}</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									</div>
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">COST:</div>
+										<div className="text-teal-400 text-xl">
+											${(tokens.length * 5) / 1000000}
+										</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									</div>
 								</div>
+							</>
+						)}
+					</div>
+
+					{/* Token List */}
+					<div className="border border-teal-900 p-2 flex-grow overflow-auto relative">
+						{!prompt ? (
+							<EmptyState
+								message="NO PROMPT"
+								action="AWAITING INPUT"
+								blinking={blinkingElement}
+							/>
+						) : (
+							<>
+								<SectionHeader title="Token List" />
 								<div className="grid grid-cols-1 gap-2" ref={tokenListRef}>
 									{tokens.map((token, i) => (
 										<div
@@ -497,194 +564,185 @@ const RetroTokenizer = () => {
 							</>
 						)}
 					</div>
-				</div>
 
-				{/* Right panel - Token details */}
-				<div className="w-1/2 border border-teal-900 p-4 flex flex-col relative">
-					{!tokenData ? (
-						<div className="flex items-center justify-center h-full text-center">
-							<div>
-								<div
-									className={`text-orange-600 my-4 ${
-										blinkingElement ? "opacity-100" : "opacity-40"
-									}`}
-								>
-									[SELECT TOKEN]
-								</div>
-								<div className="text-teal-400 text-sm">AWAITING INPUT</div>
-							</div>
-						</div>
-					) : (
-						<>
-							<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
-								TOKEN ANALYSIS
-							</div>
+					{/* Token Metrics */}
+					<div className="border border-teal-900 p-4 flex flex-col relative flex-grow">
+						{!tokenData ? (
+							<EmptyState
+								message="SELECT TOKEN"
+								action="AWAITING SELECTION"
+								blinking={blinkingElement}
+							/>
+						) : (
+							<>
+								<SectionHeader title="Token" />
 
-							<div className="flex mb-4">
-								<div className="w-full px-4 py-2 flex justify-between items-center">
-									<div className="text-xs text-orange-600">TOKEN:</div>
-									<div className="text-xl text-teal-400">
-										"{tokenData.token}"
-									</div>
-									<div className="text-xs text-orange-600">
-										POS:{" "}
-										<span className="text-teal-400">{tokenData.index}</span>
+								<div className="flex mb-4">
+									<div className="w-full px-4 py-2 flex justify-between items-center">
+										<div className="text-xs text-orange-600">TOKEN:</div>
+										<div className="text-xl text-teal-400">
+											"{tokenData.token}"
+										</div>
+										<div className="text-xs text-orange-600">
+											POS:{" "}
+											<span className="text-teal-400">{tokenData.index}</span>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
-								METRICS
-							</div>
+								<SectionHeader title="TOKEN METRICS" />
 
-							<div className="grid grid-cols-2 gap-4 mb-4">
-								<div className="p-2 relative">
-									<div className="text-xs text-orange-600">PROBABILITY:</div>
-									<div className="text-teal-400 text-xl">
-										{tokenData.probability}
+								<div className="grid grid-cols-2 gap-4 mb-4">
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">PROBABILITY:</div>
+										<div className="text-teal-400 text-xl">
+											{tokenData.probability}
+										</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
 									</div>
-									<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
-								</div>
-								<div className="p-2 relative">
-									<div className="text-xs text-orange-600">LOGIT:</div>
-									<div className="text-teal-400 text-xl">{tokenData.logit}</div>
-									<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
-								</div>
-								<div className="p-2 relative">
-									<div className="text-xs text-orange-600">ENTROPY:</div>
-									<div className="text-teal-400 text-xl">
-										{tokenData.entropy}
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">LOGIT:</div>
+										<div className="text-teal-400 text-xl">
+											{tokenData.logit}
+										</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
 									</div>
-									<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
-								</div>
-								<div className="p-2 relative">
-									<div className="text-xs text-orange-600">SURPRISAL:</div>
-									<div className="text-teal-400 text-xl">
-										{tokenData.surprisal}
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">ENTROPY:</div>
+										<div className="text-teal-400 text-xl">
+											{tokenData.entropy}
+										</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
 									</div>
-									<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									<div className="p-2 relative">
+										<div className="text-xs text-orange-600">SURPRISAL:</div>
+										<div className="text-teal-400 text-xl">
+											{tokenData.surprisal}
+										</div>
+										<div className="absolute top-0 right-0 w-1/4 h-px bg-teal-400" />
+									</div>
 								</div>
-							</div>
 
-							<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1 flex justify-between">
-								<span>NEXT TOKEN PREDICTIONS</span>
-								<span className={blinkingElement ? "opacity-100" : "opacity-0"}>
-									⬤
-								</span>
-							</div>
-							<div className="mt-4">
-								<table className="w-full border border-teal-900">
-									<thead>
-										<tr className="border-b border-teal-900">
-											<th className="text-left p-2 text-xs text-orange-600">
-												TOKEN
-											</th>
-											<th className="text-right p-2 text-xs text-orange-600">
-												PROB
-											</th>
-											<th className="text-right p-2 text-xs text-orange-600">
-												LOGIT
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{tokenData.nextTokens.map((prediction, i) => (
-											<tr
-												key={i}
-												className={`border-b border-teal-900 ${
-													i === 0 ? "bg-orange-900 bg-opacity-20" : ""
-												}`}
-											>
-												<td className="p-2 text-teal-400">
-													{prediction.token}
-												</td>
-												<td className="p-2 text-right text-teal-400">
-													{prediction.probability}
-												</td>
-												<td className="p-2 text-right text-teal-400">
-													{prediction.logit}
-												</td>
+								<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1 flex justify-between">
+									<span>NEXT TOKEN PREDICTIONS</span>
+									<span
+										className={blinkingElement ? "opacity-100" : "opacity-0"}
+									>
+										⬤
+									</span>
+								</div>
+								<div className="mt-4">
+									<table className="w-full border border-teal-900">
+										<thead>
+											<tr className="border-b border-teal-900">
+												<th className="text-left p-2 text-xs text-orange-600">
+													TOKEN
+												</th>
+												<th className="text-right p-2 text-xs text-orange-600">
+													PROB
+												</th>
+												<th className="text-right p-2 text-xs text-orange-600">
+													LOGIT
+												</th>
 											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-
-							{/* Cumulative Probability Distribution */}
-							<div className="mt-4">
-								<div className="text-xs text-orange-600 font-bold mb-2 border-b border-orange-600 pb-1">
-									CUMULATIVE PROBABILITY DISTRIBUTION
-								</div>
-								<div className="h-24 border border-teal-900 p-2 relative">
-									{/* Probability bars */}
-									{tokenData.nextTokens.map((prediction, i) => {
-										// Calculate cumulative probability
-										const cumulativeProb = tokenData.nextTokens
-											.slice(0, i + 1)
-											.reduce((sum, p) => sum + parseFloat(p.probability), 0);
-
-										// Calculate previous cumulative probability
-										const prevCumulativeProb =
-											i === 0
-												? 0
-												: tokenData.nextTokens
-														.slice(0, i)
-														.reduce(
-															(sum, p) => sum + parseFloat(p.probability),
-															0
-														);
-
-										// Calculate width percentage for this token
-										const width = `${
-											parseFloat(prediction.probability) * 100
-										}%`;
-
-										// Calculate position percentage
-										const left = `${prevCumulativeProb * 100}%`;
-
-										return (
-											<div
-												key={i}
-												className="absolute bottom-0 h-16 border-r border-teal-900 flex items-end overflow-hidden p-2"
-												style={{
-													left: left,
-													width: width,
-													backgroundColor: `rgba(0, 180, 180, ${
-														0.7 - i * 0.12
-													})`,
-												}}
-											>
-												{prediction.probability > 0 && (
-													<div className="text-xs text-black">
+										</thead>
+										<tbody>
+											{tokenData.nextTokens.map((prediction, i) => (
+												<tr
+													key={i}
+													className={`border-b border-teal-900 ${
+														i === 0 ? "bg-orange-900 bg-opacity-20" : ""
+													}`}
+												>
+													<td className="p-2 text-teal-400">
 														{prediction.token}
-													</div>
-												)}
-											</div>
-										);
-									})}
+													</td>
+													<td className="p-2 text-right text-teal-400">
+														{prediction.probability}
+													</td>
+													<td className="p-2 text-right text-teal-400">
+														{prediction.logit}
+													</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
 
-									{/* X-axis labels */}
-									<div className="absolute top-2 left-0 w-full flex justify-between px-1 text-xs text-teal-600">
-										<span>0.0</span>
-										<span>0.25</span>
-										<span>0.5</span>
-										<span>0.75</span>
-										<span>1.0</span>
+								{/* Cumulative Probability Distribution */}
+								<div className="mt-4">
+									<SectionHeader title="CUMULATIVE PROBABILITY DISTRIBUTION" />
+									<div className="h-24 border border-teal-900 p-2 relative">
+										{/* Probability bars */}
+										{tokenData.nextTokens.map((prediction, i) => {
+											// Calculate cumulative probability
+											const cumulativeProb = tokenData.nextTokens
+												.slice(0, i + 1)
+												.reduce((sum, p) => sum + parseFloat(p.probability), 0);
+
+											// Calculate previous cumulative probability
+											const prevCumulativeProb =
+												i === 0
+													? 0
+													: tokenData.nextTokens
+															.slice(0, i)
+															.reduce(
+																(sum, p) => sum + parseFloat(p.probability),
+																0
+															);
+
+											// Calculate width percentage for this token
+											const width = `${
+												parseFloat(prediction.probability) * 100
+											}%`;
+
+											// Calculate position percentage
+											const left = `${prevCumulativeProb * 100}%`;
+
+											return (
+												<div
+													key={i}
+													className="absolute bottom-0 h-16 border-r border-teal-900 flex items-end overflow-hidden p-2"
+													style={{
+														left: left,
+														width: width,
+														backgroundColor: `rgba(0, 180, 180, ${
+															0.7 - i * 0.12
+														})`,
+													}}
+												>
+													{prediction.probability > 0 && (
+														<div className="text-xs text-black">
+															{prediction.token}
+														</div>
+													)}
+												</div>
+											);
+										})}
+
+										{/* X-axis labels */}
+										<div className="absolute top-2 left-0 w-full flex justify-between px-1 text-xs text-teal-600">
+											<span>0.0</span>
+											<span>0.25</span>
+											<span>0.5</span>
+											<span>0.75</span>
+											<span>1.0</span>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<div className="flex mt-auto justify-between text-xs">
-								<div>
-									<span className="text-orange-600">MAGI:</span>
-									<span className="text-teal-400 ml-2">ANALYZING...</span>
+								<div className="flex mt-auto justify-between text-xs">
+									<div>
+										<span className="text-orange-600">MAGI:</span>
+										<span className="text-teal-400 ml-2">ANALYZING...</span>
+									</div>
+									<div className="text-teal-400">
+										<span>ORB ANALYSIS v0.01 GAMMA</span>
+									</div>
 								</div>
-								<div className="text-teal-400">
-									<span>ORB ANALYSIS v0.01 GAMMA</span>
-								</div>
-							</div>
-						</>
-					)}
+							</>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
